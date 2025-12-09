@@ -1,32 +1,21 @@
-import webbrowser
-import streamlit as st
-import pandas as pd
+import requests
 import io
-from supabase import create_client
+import pandas as pd
+import streamlit as st
+
+@st.cache_data
+def load_excel():
+    url = "https://raw.githubusercontent.com/Thomasplatt76/univ101/main/Final%20Project%20Data.xlsx"
+    response = requests.get(url)
+    return pd.read_excel(io.BytesIO(response.content))
+
+df = load_excel()
 
 button_clicked = False
-
-# ---------------------------------------
-# CONNECT TO SUPABASE
-# ---------------------------------------
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-BUCKET = st.secrets["SUPABASE_BUCKET"]
-FILE_PATH = st.secrets["SUPABASE_FILE"]
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-# ---------------------------------------
-# DOWNLOAD EXCEL FILE FROM STORAGE
-# ---------------------------------------
-file_bytes = supabase.storage.from_(BUCKET).download(FILE_PATH)
-
-df = pd.read_excel(io.BytesIO(file_bytes))
-
-
 prompt_list = dict(zip(df.iloc[:, 0], df.iloc[:, 1]))
 
 st.title("UNIV 101 Time Capsule")
+
 selected_prompt = st.selectbox("✨Select Prompt", prompt_list.values())
 selected_row = df[df.iloc[:, 1] == selected_prompt]
 
@@ -46,10 +35,10 @@ label = selected_row.iloc[0,7]
 st.markdown("""
 <style>
 .always-blue-underline a {
-    color: inherit !important;         /* keep text normal color */
+    color: inherit !important;
     text-decoration: underline !important;
     text-decoration-color: #4DA3FF !important;  /* blue underline */
-    text-underline-offset: 3px;        /* spacing between text + underline */
+    text-underline-offset: 3px;
     font-weight: 600;
 }
 </style>
@@ -58,7 +47,7 @@ st.markdown("""
 st.markdown(
     f"""
     <div class="always-blue-underline">
-        <h6>{f"✍️ {label}"}:   🔗<a href="{talk_link}" target="_blank">{talk_text}</a></h6>
+        <h6>✍️ {label}: 🔗 <a href="{talk_link}" target="_blank">{talk_text}</a></h6>
     </div>
     """,
     unsafe_allow_html=True
