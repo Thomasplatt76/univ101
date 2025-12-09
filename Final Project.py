@@ -1,17 +1,34 @@
 import webbrowser
 import streamlit as st
 import pandas as pd
+import io
+from supabase import create_client
+
 button_clicked = False
 
-df = pd.read_excel(r"C:\Users\thoma\Documents\Semester 1\UNIV 101\Final Project Data.xlsx")
-prompt_list = dict(zip(df.iloc[:, 0], df.iloc[:, 1]))
+# ---------------------------------------
+# CONNECT TO SUPABASE
+# ---------------------------------------
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+BUCKET = st.secrets["SUPABASE_BUCKET"]
+FILE_PATH = st.secrets["SUPABASE_FILE"]
 
-for x in prompt_list.values():
-    print(x)
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# ---------------------------------------
+# DOWNLOAD EXCEL FILE FROM STORAGE
+# ---------------------------------------
+file_bytes = supabase.storage.from_(BUCKET).download(FILE_PATH)
+
+df = pd.read_excel(io.BytesIO(file_bytes))
+
+
+prompt_list = dict(zip(df.iloc[:, 0], df.iloc[:, 1]))
 
 st.title("UNIV 101 Time Capsule")
 selected_prompt = st.selectbox("✨Select Prompt", prompt_list.values())
-selected_row = row = df[df.iloc[:, 1] == selected_prompt]
+selected_row = df[df.iloc[:, 1] == selected_prompt]
 
 st.write("#### 📘Prompt")
 st.write(f"{selected_row.iloc[0,2]}")
